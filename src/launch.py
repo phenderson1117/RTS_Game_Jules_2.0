@@ -75,7 +75,7 @@ def index():
 @app.route('/submit_round_1', methods=['POST'])
 def submit_round_1():
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
         if not data:
             return jsonify({'error': 'Invalid request, no JSON data received.'}), 400
 
@@ -120,8 +120,8 @@ def submit_round_1():
             r1_winner = "AI"
 
         # Calculate R2 Pools
-        player_r2_base_recruits = 10 - player_r1_unit_count
-        ai_r2_base_recruits = 10 - ai_r1_unit_count
+        player_r2_base_recruits = 10 + (10 - player_r1_unit_count)
+        ai_r2_base_recruits = 10 + (10 - ai_r1_unit_count)
         
         strength_diff = abs(player_r1_eff_strength - ai_r1_eff_strength)
         bonus_troops = int(strength_diff) # round down (floor)
@@ -160,7 +160,7 @@ def submit_round_1():
 @app.route('/submit_round_2', methods=['POST'])
 def submit_round_2():
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
         if not data:
             return jsonify({'error': 'Invalid request, no JSON data received.'}), 400
 

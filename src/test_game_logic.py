@@ -66,7 +66,7 @@ class TestTwoRoundGameLogic(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         data = self._get_json_response(response)
         self.assertIn('error', data)
-        self.assertIn('Unit count for Round 1 must be between 1 and 10', data['error'])
+        self.assertIn("Invalid unit_count for Round 1. Must be an integer between 1 and 10.", data['error'])
         
     def test_submit_round_1_invalid_unit_count_zero(self):
         payload = {'unit_type': 'archers', 'unit_count': 0}
@@ -179,7 +179,7 @@ class TestTwoRoundGameLogic(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         data = self._get_json_response(response)
         self.assertIn('error', data)
-        self.assertIn('Unit count for Round 2 cannot be negative', data['error'])
+        self.assertIn("Invalid unit_count for Round 2. Must be a non-negative integer.", data['error'])
         
     def test_submit_round_2_missing_ai_data(self):
         payload = {'unit_type': 'infantry', 'unit_count': 5} # Missing AI data
