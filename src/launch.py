@@ -10,32 +10,67 @@ def index():
 @app.route('/play', methods=['POST'])
 def play():
     try:
-        player_choice = request.json.get('choice')
-        if not player_choice or player_choice not in ['rock', 'paper', 'scissors']:
-            return jsonify({'error': 'Invalid choice'}), 400
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Invalid request, no JSON data received.'}), 400
 
-        choices = ['rock', 'paper', 'scissors']
-        computer_choice = random.choice(choices)
+        player_unit_type = data.get('unit_type')
+        player_unit_count_str = data.get('unit_count') # Keep as string for now for validation
 
-        result = ''
-        if player_choice == computer_choice:
-            result = 'Tie'
-        elif (player_choice == 'rock' and computer_choice == 'scissors') or \
-             (player_choice == 'scissors' and computer_choice == 'paper') or \
-             (player_choice == 'paper' and computer_choice == 'rock'):
+        # Validate player_unit_type
+        valid_unit_types = ['infantry', 'archers', 'cavalry']
+        if not player_unit_type or player_unit_type not in valid_unit_types:
+            return jsonify({'error': f'Invalid unit_type. Must be one of {valid_unit_types}.'}), 400
+
+        # Validate player_unit_count
+        try:
+            player_unit_count = int(player_unit_count_str)
+            if player_unit_count <= 0:
+                raise ValueError("Unit count must be positive.")
+        except (ValueError, TypeError): # Catches if conversion to int fails or if it's None
+            return jsonify({'error': 'Invalid unit_count. Must be a positive integer.'}), 400
+
+        # AI's Choice
+        computer_unit_type = random.choice(valid_unit_types)
+        computer_unit_count = random.randint(5, 15) # Example range
+
+        # Combat Logic
+        player_modifier = 1.0
+        computer_modifier = 1.0
+
+        # Type advantages: Infantry > Archers > Cavalry > Infantry
+        if (player_unit_type == 'infantry' and computer_unit_type == 'archers') or \
+           (player_unit_type == 'archers' and computer_unit_type == 'cavalry') or \
+           (player_unit_type == 'cavalry' and computer_unit_type == 'infantry'):
+            player_modifier = 1.25
+        elif (computer_unit_type == 'infantry' and player_unit_type == 'archers') or \
+              (computer_unit_type == 'archers' and player_unit_type == 'cavalry') or \
+              (computer_unit_type == 'cavalry' and player_unit_type == 'infantry'):
+            computer_modifier = 1.25
+
+        player_effective_strength = float(player_unit_count) * player_modifier
+        computer_effective_strength = float(computer_unit_count) * computer_modifier
+
+        # Determine Winner
+        if player_effective_strength > computer_effective_strength:
             result = 'You Win!'
-        else:
+        elif computer_effective_strength > player_effective_strength:
             result = 'You Lose!'
+        else:
+            result = 'Draw'
 
         return jsonify({
-            'player_choice': player_choice,
-            'computer_choice': computer_choice,
+            'player_army': {'type': player_unit_type, 'count': player_unit_count},
+            'computer_army': {'type': computer_unit_type, 'count': computer_unit_count},
+            'player_effective_strength': player_effective_strength,
+            'computer_effective_strength': computer_effective_strength,
             'result': result
         })
 
     except Exception as e:
-        app.logger.error(f"Error in /play endpoint: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        # Log the exception for debugging
+        app.logger.error(f"Error in /play endpoint: {str(e)}")
+        return jsonify({'error': 'An unexpected error occurred on the server.'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
