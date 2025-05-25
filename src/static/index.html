@@ -3,24 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rock Paper Scissors</title>
+    <title>War Game</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>Rock Paper Scissors</h1>
-
+    <h1>War Game</h1>
     <div>
-        <button id="rock">Rock</button>
-        <button id="paper">Paper</button>
-        <button id="scissors">Scissors</button>
+        <h2>Choose Your Army:</h2>
+        <label for="unit-type">Unit Type:</label>
+        <select id="unit-type">
+            <option value="infantry">Infantry</option>
+            <option value="archers">Archers</option>
+            <option value="cavalry">Cavalry</option>
+        </select>
+        <label for="unit-count">Unit Count:</label>
+        <input type="number" id="unit-count" value="10" min="1">
+        <button id="deploy-button">Deploy Units!</button>
     </div>
-
     <div>
-        <h2>Your Choice: <span id="player-choice"></span></h2>
-        <h2>Computer's Choice: <span id="computer-choice"></span></h2>
-        <h2>Result: <span id="result"></span></h2>
+        <h2>Battle Report:</h2>
+        <p><strong>Your Army:</strong> <span id="player-army-display"></span></p>
+        <p><strong>Enemy Army:</strong> <span id="computer-army-display"></span></p>
+        <p><strong>Your Effective Strength:</strong> <span id="player-strength-display"></span></p>
+        <p><strong>Enemy Effective Strength:</strong> <span id="computer-strength-display"></span></p>
+        <p><strong>Result:</strong> <span id="result-display"></span></p>
     </div>
-
     <script src="/static/script.js"></script>
 </body>
 </html>

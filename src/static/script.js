@@ -1,18 +1,34 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const rockButton = document.getElementById('rock');
-    const paperButton = document.getElementById('paper');
-    const scissorsButton = document.getElementById('scissors');
+    // UI Elements for Input
+    const unitTypeSelect = document.getElementById('unit-type');
+    const unitCountInput = document.getElementById('unit-count');
+    const deployButton = document.getElementById('deploy-button');
 
-    const playerChoiceDisplay = document.getElementById('player-choice');
-    const computerChoiceDisplay = document.getElementById('computer-choice');
-    const resultDisplay = document.getElementById('result');
+    // UI Elements for Display
+    const playerArmyDisplay = document.getElementById('player-army-display');
+    const computerArmyDisplay = document.getElementById('computer-army-display');
+    const playerStrengthDisplay = document.getElementById('player-strength-display');
+    const computerStrengthDisplay = document.getElementById('computer-strength-display');
+    const resultDisplay = document.getElementById('result-display');
 
-    const choices = ['rock', 'paper', 'scissors'];
+    deployButton.addEventListener('click', async () => {
+        const unitType = unitTypeSelect.value;
+        const unitCount = parseInt(unitCountInput.value, 10);
 
-    async function playGame(playerChoice) {
-        playerChoiceDisplay.textContent = playerChoice;
-        computerChoiceDisplay.textContent = ''; // Clear previous computer choice
-        resultDisplay.textContent = 'Thinking...';
+        if (isNaN(unitCount) || unitCount <= 0) {
+            resultDisplay.textContent = 'Please enter a valid, positive unit count.';
+            playerArmyDisplay.textContent = '';
+            computerArmyDisplay.textContent = '';
+            playerStrengthDisplay.textContent = '';
+            computerStrengthDisplay.textContent = '';
+            return;
+        }
+
+        playerArmyDisplay.textContent = '---';
+        computerArmyDisplay.textContent = '---';
+        playerStrengthDisplay.textContent = '---';
+        computerStrengthDisplay.textContent = '---';
+        resultDisplay.textContent = 'Battling...';
 
         try {
             const response = await fetch('/play', {
@@ -20,25 +36,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ choice: playerChoice }),
+                body: JSON.stringify({
+                    unit_type: unitType,
+                    unit_count: unitCount
+                }),
             });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
 
             const data = await response.json();
 
-            computerChoiceDisplay.textContent = data.computer_choice;
+            if (!response.ok) {
+                const errorMessage = data.error || `HTTP error! Status: ${response.status}`;
+                throw new Error(errorMessage);
+            }
+
+            playerArmyDisplay.textContent = `${data.player_army.type} x${data.player_army.count}`;
+            computerArmyDisplay.textContent = `${data.computer_army.type} x${data.computer_army.count}`;
+            playerStrengthDisplay.textContent = data.player_effective_strength;
+            computerStrengthDisplay.textContent = data.computer_effective_strength;
             resultDisplay.textContent = data.result;
 
         } catch (error) {
             console.error('Error playing game:', error);
-            resultDisplay.textContent = 'Error! Could not get result.';
+            resultDisplay.textContent = `Error: ${error.message}`;
+            playerArmyDisplay.textContent = 'Error';
+            computerArmyDisplay.textContent = 'Error';
+            playerStrengthDisplay.textContent = 'Error';
+            computerStrengthDisplay.textContent = 'Error';
         }
-    }
-
-    rockButton.addEventListener('click', () => playGame('rock'));
-    paperButton.addEventListener('click', () => playGame('paper'));
-    scissorsButton.addEventListener('click', () => playGame('scissors'));
+    });
 });
