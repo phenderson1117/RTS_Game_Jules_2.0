@@ -3,31 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>War Game</title>
+    <title>War Game - Two Rounds</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>War Game</h1>
-    <div>
-        <h2>Choose Your Army:</h2>
-        <label for="unit-type">Unit Type:</label>
-        <select id="unit-type">
-            <option value="infantry">Infantry</option>
-            <option value="archers">Archers</option>
-            <option value="cavalry">Cavalry</option>
-        </select>
-        <label for="unit-count">Unit Count:</label>
-        <input type="number" id="unit-count" value="10" min="1">
-        <button id="deploy-button">Deploy Units!</button>
+    <h1>War Game - Two Rounds</h1>
+
+    <!-- Round 1 Section -->
+    <div id="round-1-section">
+        <h2>Round 1: Deployment</h2>
+        <div>
+            <label for="r1-unit-type">Unit Type:</label>
+            <select id="r1-unit-type">
+                <option value="infantry">Infantry</option>
+                <option value="archers">Archers</option>
+                <option value="cavalry">Cavalry</option>
+            </select>
+
+            <label for="r1-unit-count">Unit Count (Max 10):</label>
+            <input type="number" id="r1-unit-count" value="10" min="1" max="10">
+
+            <button id="deploy-r1-button">Deploy Round 1 Units!</button>
+        </div>
     </div>
-    <div>
-        <h2>Battle Report:</h2>
-        <p><strong>Your Army:</strong> <span id="player-army-display"></span></p>
-        <p><strong>Enemy Army:</strong> <span id="computer-army-display"></span></p>
-        <p><strong>Your Effective Strength:</strong> <span id="player-strength-display"></span></p>
-        <p><strong>Enemy Effective Strength:</strong> <span id="computer-strength-display"></span></p>
-        <p><strong>Result:</strong> <span id="result-display"></span></p>
+
+    <!-- Round 1 Results Section -->
+    <div id="round-1-results-section" style="display: none;">
+        <h2>Round 1 Results:</h2>
+        <p><strong>Your R1 Army:</strong> <span id="player-r1-army-display"></span> (Strength: <span id="player-r1-strength-display"></span>)</p>
+        <p><strong>Enemy R1 Army:</strong> <span id="computer-r1-army-display"></span> (Strength: <span id="computer-r1-strength-display"></span>)</p>
+        <p><strong>Round 1 Winner:</strong> <span id="r1-winner-display"></span></p>
+        <p><strong>Your R2 Recruitment Pool:</strong> <span id="player-r2-pool-display"></span> units</p>
     </div>
+
+    <!-- Round 2 Section -->
+    <div id="round-2-section" style="display: none;">
+        <h2>Round 2: Reinforcements</h2>
+        <div>
+            <label for="r2-unit-type">Unit Type:</label>
+            <select id="r2-unit-type">
+                <option value="infantry">Infantry</option>
+                <option value="archers">Archers</option>
+                <option value="cavalry">Cavalry</option>
+            </select>
+
+            <label for="r2-unit-count">Unit Count (Max <span id="r2-max-units-label">X</span>):</label>
+            <input type="number" id="r2-unit-count" value="0" min="0">
+
+            <button id="deploy-r2-button">Deploy Round 2 Units!</button>
+        </div>
+    </div>
+
+    <!-- Round 2 Results / Game Winner Section -->
+    <div id="round-2-results-section" style="display: none;">
+        <h2>Round 2 Results:</h2>
+        <p><strong>Your R2 Army:</strong> <span id="player-r2-army-display"></span> (Strength: <span id="player-r2-strength-display"></span>)</p>
+        <p><strong>Enemy R2 Army:</strong> <span id="computer-r2-army-display"></span> (Strength: <span id="computer-r2-strength-display"></span>)</p>
+        <p><strong>Round 2 Winner:</strong> <span id="r2-winner-display"></span></p>
+        <h2>Overall Game Winner: <span id="game-winner-display"></span></h2>
+    </div>
+
+    <!-- General Message Area -->
+    <div id="message-area" style="margin-top: 20px;">
+         <p><span id="general-message-display"></span></p>
+    </div>
+
     <script src="/static/script.js"></script>
 </body>
 </html>
