@@ -230,13 +230,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             playerR2PoolDisplay.textContent = R2_MAX_UNITS;
             r2MaxUnitsLabel.textContent = R2_MAX_UNITS;
-            r2UnitCountInput.max = R2_MAX_UNITS;
-            r2UnitCountInput.value = Math.min(10, R2_MAX_UNITS); // Sensible default for R2
+            
+            // Ensure r2UnitCountInput is correctly defined and accessed
+            if (r2UnitCountInput) { // Check if the element was found
+                r2UnitCountInput.max = R2_MAX_UNITS; 
+                r2UnitCountInput.value = Math.min(10, R2_MAX_UNITS); // Default R2 count
+            } else {
+                console.error("Error: r2-unit-count element not found in HTML!");
+                showMessage("Critical UI Error: R2 count input missing.", true);
+            }
 
             r1ResultsSection.style.display = 'block';
-            r2Section.style.display = 'block';
-            deployR2Button.disabled = false; // Assuming deployR2Button is the ID for r2FinalizeButton
-            r2AddBatchButton.disabled = false;
+            // Check R2_MAX_UNITS before displaying R2 section and enabling buttons
+            if (R2_MAX_UNITS >= 0) { // Player might have 0 units but can still proceed to R2 (to deploy 0)
+                 r2Section.style.display = 'block';
+                 if(r2FinalizeButton) r2FinalizeButton.disabled = false; 
+                 if(r2AddBatchButton) r2AddBatchButton.disabled = false;
+            } else { 
+                 // This case should ideally not be reached if backend logic is correct (pool shouldn't be negative)
+                 showMessage('Error in R2 pool calculation or no units available. Game Over.', true);
+            }
             
             r1Section.style.display = 'none';
             showMessage('R1 complete. Proceed to Round 2 deployment.');
