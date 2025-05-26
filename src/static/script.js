@@ -329,10 +329,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) { throw new Error(data.error || `HTTP error! Status: ${response.status}`); }
 
             const r2res = data.round_2_results;
-            playerR2ArmyDisplay.textContent = `Total ${r2res.player_army.count} units`;
-            playerR2StrengthDisplay.textContent = r2res.player_army.strength;
-            computerR2ArmyDisplay.textContent = `Total ${r2res.ai_army.count} units`;
-            computerR2StrengthDisplay.textContent = r2res.ai_army.strength;
+            playerR2ArmyDisplay.textContent = `Total ${r2res.player_army_summary_for_combat.count} units`;
+            playerR2StrengthDisplay.textContent = r2res.player_army_summary_for_combat.strength;
+            computerR2ArmyDisplay.textContent = `Total ${r2res.ai_army_summary_for_combat.count} units`;
+            computerR2StrengthDisplay.textContent = r2res.ai_army_summary_for_combat.strength;
             r2WinnerDisplay.textContent = r2res.round_winner;
             gameWinnerDisplay.textContent = data.game_winner;
             
