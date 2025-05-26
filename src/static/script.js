@@ -231,12 +231,12 @@ document.addEventListener('DOMContentLoaded', () => {
             playerR2PoolDisplay.textContent = R2_MAX_UNITS;
             r2MaxUnitsLabel.textContent = R2_MAX_UNITS;
             
-            // Ensure r2UnitCountInput is correctly defined and accessed
-            if (r2UnitCountInput) { // Check if the element was found
-                r2UnitCountInput.max = R2_MAX_UNITS; 
-                r2UnitCountInput.value = Math.min(10, R2_MAX_UNITS); // Default R2 count
+            // Ensure r2BatchUnitCountInput is correctly defined and accessed
+            if (r2BatchUnitCountInput) { // Check if the element was found
+                r2BatchUnitCountInput.max = R2_MAX_UNITS; 
+                r2BatchUnitCountInput.value = Math.min(10, R2_MAX_UNITS); // Default R2 count
             } else {
-                console.error("Error: r2-unit-count element not found in HTML!");
+                console.error("Error: r2-batch-unit-count element not found in HTML!");
                 showMessage("Critical UI Error: R2 count input missing.", true);
             }
 
