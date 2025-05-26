@@ -60,6 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let aiR1ArmyDetailsForR2 = null;
     let aiR2DataForR2 = null;
     let playerR1DeploymentsForR2 = null; // Player's R1 deployments also need to be sent for map reconstruction
+    let aiR1DeploymentsForR2 = null; 
+    let playerR2TotalPoolForR2 = null;
 
     // --- Utility Functions ---
     function showMessage(message, isError = false) {
@@ -226,7 +228,9 @@ document.addEventListener('DOMContentLoaded', () => {
             R2_MAX_UNITS = data.player_r2_data.total_r2_pool;
             aiR1ArmyDetailsForR2 = data.ai_r1_army_details_for_r2; // Store for R2
             aiR2DataForR2 = data.ai_r2_data_for_r2;                 // Store for R2
-            playerR1DeploymentsForR2 = r1Deployments; // Store player's R1 deployments
+            playerR1DeploymentsForR2 = data.player_r1_deployments; // Store player's R1 deployments
+            aiR1DeploymentsForR2 = data.ai_r1_deployments;
+            playerR2TotalPoolForR2 = data.player_r2_data.total_r2_pool; 
 
             playerR2PoolDisplay.textContent = R2_MAX_UNITS;
             r2MaxUnitsLabel.textContent = R2_MAX_UNITS;
@@ -308,14 +312,16 @@ document.addEventListener('DOMContentLoaded', () => {
         r2AddBatchButton.disabled = true;
 
         try {
+            console.log("Submitting to /submit_round_2 payload:", JSON.stringify({ player_deployments_r2: r2Deployments, ai_r1_deployments: aiR1DeploymentsForR2, ai_r2_data_for_r2: aiR2DataForR2, player_r1_deployments: playerR1DeploymentsForR2, player_r2_total_pool: playerR2TotalPoolForR2 }, null, 2));
             const response = await fetch('/submit_round_2', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     player_deployments_r2: r2Deployments,
-                    ai_r1_army_details_for_r2: aiR1ArmyDetailsForR2,
+                    ai_r1_deployments: aiR1DeploymentsForR2,
                     ai_r2_data_for_r2: aiR2DataForR2,
-                    player_r1_deployments: playerR1DeploymentsForR2 // Send player's R1 deployments
+                    player_r1_deployments: playerR1DeploymentsForR2, 
+                    player_r2_total_pool: playerR2TotalPoolForR2 
                 }),
             });
             const data = await response.json();
