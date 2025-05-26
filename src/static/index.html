@@ -9,56 +9,82 @@
 <body>
     <h1>War Game - Two Rounds</h1>
 
+    <!-- Map Grid Display Area -->
+    <div id="map-grid-container">
+        <h3>Deployment Map</h3>
+        <table id="map-grid">
+            <!-- JS will generate 5 rows (<tr>) each with 5 cells (<td>) -->
+            <!-- Example: <tr><td id="cell-0-0" data-x="0" data-y="0"></td><td id="cell-0-1" data-x="0" data-y="1"></td>...</tr> -->
+        </table>
+    </div>
+
     <!-- Round 1 Section -->
     <div id="round-1-section">
-        <h2>Round 1: Deployment</h2>
-        <div>
-            <label for="r1-unit-type">Unit Type:</label>
-            <select id="r1-unit-type">
+        <h2>Round 1: Recruit & Deploy Units</h2>
+        <div id="r1-deployment-controls">
+            <h4>Recruit Batch:</h4>
+            <label for="r1-batch-unit-type">Unit Type:</label>
+            <select id="r1-batch-unit-type">
                 <option value="infantry">Infantry</option>
                 <option value="archers">Archers</option>
                 <option value="cavalry">Cavalry</option>
             </select>
-
-            <label for="r1-unit-count">Unit Count (Max 10):</label>
-            <input type="number" id="r1-unit-count" value="10" min="1" max="10">
-
-            <button id="deploy-r1-button">Deploy Round 1 Units!</button>
+            <label for="r1-batch-unit-count">Count:</label>
+            <input type="number" id="r1-batch-unit-count" min="1" value="1">
+            <label for="r1-batch-x">X (0-4):</label>
+            <input type="number" id="r1-batch-x" min="0" max="4">
+            <label for="r1-batch-y">Y (0-4):</label>
+            <input type="number" id="r1-batch-y" min="0" max="4">
+            <button id="r1-add-batch-button">Add Batch to R1 Deployments</button>
         </div>
+        <div id="r1-deployments-summary">
+            <h4>Current R1 Deployments (Total <span id="r1-total-deployed-count">0</span>/10 units):</h4>
+            <ul id="r1-deployment-list"></ul>
+        </div>
+        <button id="r1-finalize-deployments-button">Finalize Round 1 Deployments</button>
     </div>
 
     <!-- Round 1 Results Section -->
     <div id="round-1-results-section" style="display: none;">
         <h2>Round 1 Results:</h2>
-        <p><strong>Your R1 Army:</strong> <span id="player-r1-army-display"></span> (Strength: <span id="player-r1-strength-display"></span>)</p>
-        <p><strong>Enemy R1 Army:</strong> <span id="computer-r1-army-display"></span> (Strength: <span id="computer-r1-strength-display"></span>)</p>
+        <p><strong>Your R1 Army (Combat Summary):</strong> <span id="player-r1-army-display"></span> (Strength: <span id="player-r1-strength-display"></span>)</p>
+        <p><strong>Enemy R1 Army (Combat Summary):</strong> <span id="computer-r1-army-display"></span> (Strength: <span id="computer-r1-strength-display"></span>)</p>
         <p><strong>Round 1 Winner:</strong> <span id="r1-winner-display"></span></p>
-        <p><strong>Your R2 Recruitment Pool:</strong> <span id="player-r2-pool-display"></span> units</p>
+        <p><strong>Your R2 Recruitment Pool:</strong> <span id="player-r2-pool-display"></span> units (Base: <span id="player-r2-base-recruits-display"></span>, Bonus: <span id="player-r2-bonus-display"></span>)</p>
     </div>
 
     <!-- Round 2 Section -->
     <div id="round-2-section" style="display: none;">
-        <h2>Round 2: Reinforcements</h2>
-        <div>
-            <label for="r2-unit-type">Unit Type:</label>
-            <select id="r2-unit-type">
+        <h2>Round 2: Recruit & Deploy Reinforcements</h2>
+        <p>Your R2 Budget: <span id="r2-max-units-label">X</span> units</p>
+        <div id="r2-deployment-controls">
+            <h4>Recruit Batch:</h4>
+            <label for="r2-batch-unit-type">Unit Type:</label>
+            <select id="r2-batch-unit-type">
                 <option value="infantry">Infantry</option>
                 <option value="archers">Archers</option>
                 <option value="cavalry">Cavalry</option>
             </select>
-
-            <label for="r2-unit-count">Unit Count (Max <span id="r2-max-units-label">X</span>):</label>
-            <input type="number" id="r2-unit-count" value="0" min="0">
-
-            <button id="deploy-r2-button">Deploy Round 2 Units!</button>
+            <label for="r2-batch-unit-count">Count:</label>
+            <input type="number" id="r2-batch-unit-count" min="0" value="0"> <!-- Min 0 for R2 -->
+            <label for="r2-batch-x">X (0-4):</label>
+            <input type="number" id="r2-batch-x" min="0" max="4">
+            <label for="r2-batch-y">Y (0-4):</label>
+            <input type="number" id="r2-batch-y" min="0" max="4">
+            <button id="r2-add-batch-button">Add Batch to R2 Deployments</button>
         </div>
+        <div id="r2-deployments-summary">
+            <h4>Current R2 Deployments (Total <span id="r2-total-deployed-count">0</span>/<span id="r2-budget-display">X</span> units):</h4>
+            <ul id="r2-deployment-list"></ul>
+        </div>
+        <button id="r2-finalize-deployments-button">Finalize Round 2 Deployments</button>
     </div>
 
     <!-- Round 2 Results / Game Winner Section -->
     <div id="round-2-results-section" style="display: none;">
         <h2>Round 2 Results:</h2>
-        <p><strong>Your R2 Army:</strong> <span id="player-r2-army-display"></span> (Strength: <span id="player-r2-strength-display"></span>)</p>
-        <p><strong>Enemy R2 Army:</strong> <span id="computer-r2-army-display"></span> (Strength: <span id="computer-r2-strength-display"></span>)</p>
+        <p><strong>Your R2 Army (Combat Summary):</strong> <span id="player-r2-army-display"></span> (Strength: <span id="player-r2-strength-display"></span>)</p>
+        <p><strong>Enemy R2 Army (Combat Summary):</strong> <span id="computer-r2-army-display"></span> (Strength: <span id="computer-r2-strength-display"></span>)</p>
         <p><strong>Round 2 Winner:</strong> <span id="r2-winner-display"></span></p>
         <h2>Overall Game Winner: <span id="game-winner-display"></span></h2>
     </div>
