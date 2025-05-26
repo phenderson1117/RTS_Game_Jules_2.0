@@ -114,7 +114,6 @@ def submit_round_1():
 
         player_r1_deployments_input = data.get('player_deployments')
 
-        # --- R1 Player Deployment Validation ---
         if not isinstance(player_r1_deployments_input, list):
             return jsonify({'error': 'Invalid player_deployments format. Must be a list.'}), 400
 
@@ -125,84 +124,53 @@ def submit_round_1():
         for dep in player_r1_deployments_input:
             if not isinstance(dep, dict): return jsonify({'error': 'Invalid deployment item (must be dict).'}), 400
             unit_type = dep.get('unit_type')
-            unit_count_str = dep.get('unit_count')
+            unit_count_str = dep.get('unit_count') # Keep as string for now
             x, y = dep.get('x'), dep.get('y')
 
             if unit_type not in VALID_UNIT_TYPES: return jsonify({'error': f'Invalid unit_type: {unit_type}.'}), 400
+            
+            # Ensure x and y are integers before range check
             if not isinstance(x, int) or not isinstance(y, int) or \
                not (0 <= x < MAP_SIZE and 0 <= y < MAP_SIZE):
-                return jsonify({'error': f'Invalid coordinates: ({x},{y}). Must be 0-{MAP_SIZE-1}.'}), 400
+                return jsonify({'error': f'Invalid coordinates: ({x},{y}). Must be 0-{MAP_SIZE-1} integers.'}), 400
+            
             if (x,y) in player_occupied_cells_r1: return jsonify({'error': f'Player cannot deploy to the same cell ({x},{y}) twice in R1.'}), 400
             
             try:
-                unit_count = int(unit_count_str)
+                unit_count = int(unit_count_str) # Convert here
                 if unit_count <= 0: return jsonify({'error': 'Unit count must be positive.'}), 400
             except (ValueError, TypeError):
-                return jsonify({'error': 'Invalid unit_count format.'}), 400
+                return jsonify({'error': 'Invalid unit_count format. Must be a positive integer string.'}), 400 # Corrected error message
             
             validated_player_r1_deployments.append({'owner': 'P1', 'unit_type': unit_type, 'count': unit_count, 'x': x, 'y': y})
             player_r1_total_deployed_count += unit_count
             player_occupied_cells_r1.add((x,y))
 
-        if player_r1_total_deployed_count > 10: # R1 Budget
-            return jsonify({'error': f'Player R1 deployment exceeds budget of 10 (deployed {player_r1_total_deployed_count}).'}), 400
-        if player_r1_total_deployed_count < 1: # Must deploy at least 1 unit
-             return jsonify({'error': 'Player must deploy at least 1 unit in Round 1.'}), 400
+        # R1 Budget for player is 10 (example)
+        R1_PLAYER_BUDGET = 10 
+        if player_r1_total_deployed_count != R1_PLAYER_BUDGET: 
+             return jsonify({'error': f'Total deployed unit count for Round 1 must be exactly {R1_PLAYER_BUDGET}.'}), 400
 
 
-        # --- AI R1 Deployment ---
-        # For R1, AI also has a budget of 10. For simplicity, assume it deploys one type of unit.
         ai_r1_total_budget = 10
         ai_r1_chosen_unit_type = random.choice(VALID_UNIT_TYPES)
         
-        # AI needs to deploy on cells not occupied by the player
         ai_r1_deployments, _ = deploy_ai_units(
             ai_r1_total_budget, 
             ai_r1_chosen_unit_type, 
-            list(player_occupied_cells_r1), # Pass player's cells as occupied
+            list(player_occupied_cells_r1),
             "AI"
         )
-        
         ai_r1_actual_deployed_count = sum(d['count'] for d in ai_r1_deployments)
 
-
-        # --- Map State Construction R1 ---
         all_r1_deployments = validated_player_r1_deployments + ai_r1_deployments
         current_map_state = populate_map_from_deployments(all_r1_deployments)
-        
-        # --- Combat Logic (Simplified - based on total counts, not map) ---
-        # This part remains the same as before, using total counts for strength calculation
-        player_r1_eff_strength = 0
-        # Assume single unit type for player for this strength calc, or sum up if multiple types were allowed in validated_player_r1_deployments
-        # For now, let's use the first deployment's type for player's overall unit type for combat
-        # This is a simplification from previous logic where player chose one type and one count.
-        # The new deployment structure means player can deploy multiple types.
-        # For FAIRNESS, combat should consider this. Let's calculate strength based on *each* deployed stack.
-        
-        # Recalculate player_r1_eff_strength based on all their deployed units
-        player_r1_total_strength_for_combat = 0
-        # For AI combat strength, we need AI's overall chosen type for this round for modifier calculations
-        # The current AI deploys one type, so ai_r1_chosen_unit_type is fine.
-        # For player, if they deploy multiple types, how does the modifier work?
-        # The original combat was one type vs one type.
-        # Let's keep it simple: player's "overall" type for R1 is the type of their largest deployed stack.
-        # This is a placeholder for potentially more complex combat logic.
-        
-        # Determine player's primary type for combat (e.g., type of largest deployment)
-        # Or, for now, assume player also picks one "main" type for the round for combat calc,
-        # even if deployments are varied.
-        # The problem description says "The existing R1 combat logic ... should remain UNCHANGED".
-        # This implies we still need a single player_r1_unit_type and player_r1_unit_count for that logic.
-        # This conflicts with the new deployment input.
-        # RESOLUTION: For now, use the *total deployed count* for player for combat,
-        # and use the *first unit type in their deployment list* as their "main type" for modifier.
         
         player_r1_combat_unit_type = validated_player_r1_deployments[0]['unit_type'] if validated_player_r1_deployments else VALID_UNIT_TYPES[0]
         player_r1_combat_total_count = player_r1_total_deployed_count
 
-        ai_r1_combat_unit_type = ai_r1_chosen_unit_type
+        ai_r1_combat_unit_type = ai_r1_chosen_unit_type # AI deploys one type in R1
         ai_r1_combat_total_count = ai_r1_actual_deployed_count
-
 
         player_modifier = 1.0
         ai_modifier = 1.0
@@ -222,8 +190,8 @@ def submit_round_1():
         if player_r1_eff_strength > ai_r1_eff_strength: r1_winner = "Player"
         elif ai_r1_eff_strength > player_r1_eff_strength: r1_winner = "AI"
 
-        player_r2_base_recruits = 10 + (10 - player_r1_combat_total_count) # Based on total deployed
-        ai_r2_base_recruits = 10 + (10 - ai_r1_combat_total_count)     # Based on total deployed
+        player_r2_base_recruits = 10 + (10 - player_r1_combat_total_count)
+        ai_r2_base_recruits = 10 + (10 - ai_r1_combat_total_count)
 
         strength_diff = abs(player_r1_eff_strength - ai_r1_eff_strength)
         bonus_troops = int(strength_diff)
@@ -233,16 +201,23 @@ def submit_round_1():
         ai_total_r2_pool = max(0, ai_r2_base_recruits + ai_r2_bonus)
 
         return jsonify({
-            'round_1_results': {
-                'player_army_summary_for_combat': {'type': player_r1_combat_unit_type, 'count': player_r1_combat_total_count, 'strength': player_r1_eff_strength},
-                'ai_army_summary_for_combat': {'type': ai_r1_combat_unit_type, 'count': ai_r1_combat_total_count, 'strength': ai_r1_eff_strength},
+            'round_1_results': {  # Ensure this is the top-level key
+                'player_army': {  # Corrected key
+                    'type': player_r1_combat_unit_type,
+                    'count': player_r1_combat_total_count,
+                    'strength': player_r1_eff_strength
+                },
+                'ai_army': {      # Corrected key
+                    'type': ai_r1_combat_unit_type,
+                    'count': ai_r1_combat_total_count,
+                    'strength': ai_r1_eff_strength
+                },
                 'round_winner': r1_winner
             },
             'player_r1_deployments': validated_player_r1_deployments,
             'ai_r1_deployments': ai_r1_deployments,
             'current_map_state': current_map_state,
             'player_r2_data': {'base_recruits': player_r2_base_recruits, 'bonus': player_r2_bonus, 'total_r2_pool': player_total_r2_pool},
-            # Pass AI's R1 chosen type and actual deployed count for R2 AI budget reference if needed
             'ai_r1_army_details_for_r2': {'type': ai_r1_combat_unit_type, 'count': ai_r1_combat_total_count}, 
             'ai_r2_data_for_r2': {'base_recruits': ai_r2_base_recruits, 'bonus': ai_r2_bonus, 'total_r2_pool': ai_total_r2_pool}
         })
@@ -252,7 +227,6 @@ def submit_round_1():
         import traceback
         app.logger.error(traceback.format_exc())
         return jsonify({'error': 'An unexpected error occurred on the server.'}), 500
-
 
 @app.route('/submit_round_2', methods=['POST'])
 def submit_round_2():
