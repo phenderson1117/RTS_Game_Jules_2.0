@@ -164,6 +164,55 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await response.json();
 
+            // --- Start of new defensive checks ---
+            if (!data) {
+                console.error("R1 Finalize Error: Received no data from server.", response);
+                showMessage("R1 Error: No data received from server.", true);
+                r1FinalizeButton.disabled = false;
+                r1AddBatchButton.disabled = false;
+                return;
+            }
+
+            console.log("R1 Finalize Data Received:", JSON.stringify(data, null, 2)); // Log the whole data object
+
+            if (!data.round_1_results || 
+                !data.round_1_results.player_army || 
+                typeof data.round_1_results.player_army.count === 'undefined' ||
+                !data.round_1_results.ai_army || 
+                typeof data.round_1_results.ai_army.count === 'undefined' ||
+                !data.player_r2_data || 
+                typeof data.player_r2_data.total_r2_pool === 'undefined' ||
+                !data.ai_r1_army_details_for_r2 ||
+                !data.ai_r2_data_for_r2 ||
+                !data.current_map_state || // Also check for map state as it's crucial
+                !data.player_r1_deployments ||
+                !data.ai_r1_deployments) {
+                
+                console.error("R1 Finalize Error: Malformed data received from server. One or more expected fields are missing.", data);
+                showMessage("R1 Error: Server response was incomplete or malformed. Cannot proceed.", true);
+                
+                // Log which specific parts are problematic
+                if (!data.round_1_results) console.error("Missing: data.round_1_results");
+                else {
+                    if (!data.round_1_results.player_army) console.error("Missing: data.round_1_results.player_army");
+                    else if (typeof data.round_1_results.player_army.count === 'undefined') console.error("Missing: data.round_1_results.player_army.count");
+                    if (!data.round_1_results.ai_army) console.error("Missing: data.round_1_results.ai_army");
+                    else if (typeof data.round_1_results.ai_army.count === 'undefined') console.error("Missing: data.round_1_results.ai_army.count");
+                }
+                if (!data.player_r2_data) console.error("Missing: data.player_r2_data");
+                else if (typeof data.player_r2_data.total_r2_pool === 'undefined') console.error("Missing: data.player_r2_data.total_r2_pool");
+                if (!data.ai_r1_army_details_for_r2) console.error("Missing: data.ai_r1_army_details_for_r2");
+                if (!data.ai_r2_data_for_r2) console.error("Missing: data.ai_r2_data_for_r2");
+                if (!data.current_map_state) console.error("Missing: data.current_map_state");
+                if (!data.player_r1_deployments) console.error("Missing: data.player_r1_deployments");
+                if (!data.ai_r1_deployments) console.error("Missing: data.ai_r1_deployments");
+
+                r1FinalizeButton.disabled = false;
+                r1AddBatchButton.disabled = false;
+                return;
+            }
+            // --- End of new defensive checks ---
+
             if (!response.ok) { throw new Error(data.error || `HTTP error! Status: ${response.status}`); }
 
             const r1res = data.round_1_results;
