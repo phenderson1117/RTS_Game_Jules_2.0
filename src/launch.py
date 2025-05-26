@@ -234,8 +234,16 @@ def submit_round_1():
 
         return jsonify({
             'round_1_results': {
-                'player_army_summary_for_combat': {'type': player_r1_combat_unit_type, 'count': player_r1_combat_total_count, 'strength': player_r1_eff_strength},
-                'ai_army_summary_for_combat': {'type': ai_r1_combat_unit_type, 'count': ai_r1_combat_total_count, 'strength': ai_r1_eff_strength},
+                'player_army': {
+                    'type': player_r1_combat_unit_type,
+                    'count': player_r1_combat_total_count,
+                    'strength': player_r1_eff_strength
+                },
+                'ai_army': {
+                    'type': ai_r1_combat_unit_type,
+                    'count': ai_r1_combat_total_count,
+                    'strength': ai_r1_eff_strength
+                },
                 'round_winner': r1_winner
             },
             'player_r1_deployments': validated_player_r1_deployments,
