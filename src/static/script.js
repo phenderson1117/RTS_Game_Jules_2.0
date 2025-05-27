@@ -85,14 +85,43 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!mapState) return;
         for (let y = 0; y < 5; y++) {
             for (let x = 0; x < 5; x++) {
-                const cellId = `cell-${y}-${x}`; // Corrected ID format
+                const cellId = `cell-${y}-${x}`; // Corrected ID format based on existing code
                 const cell = document.getElementById(cellId);
                 if (cell) {
                     const cellData = mapState[y][x];
+                    cell.innerHTML = ''; // Clear the cell first
+
                     if (cellData) {
-                        cell.textContent = `${cellData.owner === 'P1' ? 'P' : 'AI'}:${cellData.unit_type.substring(0,3)}:${cellData.count}`;
+                        // Construct image filename
+                        let imageName = '';
+                        if (cellData.owner === 'P1') {
+                            imageName = `p1_${cellData.unit_type}.png`;
+                        } else if (cellData.owner === 'AI') {
+                            imageName = `ai_${cellData.unit_type}.png`;
+                        }
+
+                        if (imageName) {
+                            const imgElement = document.createElement('img');
+                            imgElement.src = `static/images/${imageName}`; // Path to image
+                            imgElement.alt = `${cellData.owner} ${cellData.unit_type}`;
+                            // Style for the image will be handled by CSS (next step)
+                            // but ensure it's display block for centering if CSS handles that
+                            imgElement.style.display = 'block'; 
+                            imgElement.style.margin = '0 auto'; // Basic centering for now
+
+                            const countElement = document.createElement('div');
+                            countElement.textContent = cellData.count;
+                            countElement.style.textAlign = 'center'; // Center the count text
+
+                            cell.appendChild(imgElement);
+                            cell.appendChild(countElement);
+                        } else {
+                            // Fallback if owner is not P1 or AI, or unit_type is unknown
+                            // Though current game logic ensures owner is P1 or AI
+                            cell.textContent = `${cellData.owner === 'P1' ? 'P' : 'AI'}:${cellData.unit_type.substring(0,3)}:${cellData.count}`;
+                        }
                     } else {
-                        cell.textContent = '-';
+                        cell.textContent = ''; // Make empty cells truly empty (or use a placeholder image if desired later)
                     }
                 }
             }
