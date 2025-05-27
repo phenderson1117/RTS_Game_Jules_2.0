@@ -108,70 +108,43 @@ def index():
 @app.route('/submit_round_1', methods=['POST'])
 def submit_round_1():
     try:
-        data = request.get_json(silent=True)
-        if not data:
-            return jsonify({'error': 'Invalid request, no JSON data received.'}), 400
+        # Request body is no longer used for player R1 deployments, but keeping the structure
+        # in case other data might be passed in the future.
+        data = request.get_json(silent=True) 
+        # app.logger.info(f"R1 Data: {data}") # Optional: log if you want to see if client sends anything
 
-        player_r1_deployments_input = data.get('player_deployments')
+        # --- Fixed Player 1 R1 Deployment ---
+        player_r1_combat_unit_type = 'infantry'
+        player_r1_total_deployed_count = 10
+        validated_player_r1_deployments = [
+            {'owner': 'P1', 'unit_type': player_r1_combat_unit_type, 'count': player_r1_total_deployed_count, 'x': 0, 'y': 0}
+        ]
+        # player_occupied_cells_r1 is not strictly needed here with fixed deployments
+        # but if any other logic expected it, it would be:
+        # player_occupied_cells_r1 = set([(0,0)]) 
 
-        if not isinstance(player_r1_deployments_input, list):
-            return jsonify({'error': 'Invalid player_deployments format. Must be a list.'}), 400
-
-        validated_player_r1_deployments = []
-        player_r1_total_deployed_count = 0
-        player_occupied_cells_r1 = set()
-
-        for dep in player_r1_deployments_input:
-            if not isinstance(dep, dict): return jsonify({'error': 'Invalid deployment item (must be dict).'}), 400
-            unit_type = dep.get('unit_type')
-            unit_count_str = dep.get('unit_count') # Keep as string for now
-            x, y = dep.get('x'), dep.get('y')
-
-            if unit_type not in VALID_UNIT_TYPES: return jsonify({'error': f'Invalid unit_type: {unit_type}.'}), 400
-            
-            # Ensure x and y are integers before range check
-            if not isinstance(x, int) or not isinstance(y, int) or \
-               not (0 <= x < MAP_SIZE and 0 <= y < MAP_SIZE):
-                return jsonify({'error': f'Invalid coordinates: ({x},{y}). Must be 0-{MAP_SIZE-1} integers.'}), 400
-            
-            if (x,y) in player_occupied_cells_r1: return jsonify({'error': f'Player cannot deploy to the same cell ({x},{y}) twice in R1.'}), 400
-            
-            try:
-                unit_count = int(unit_count_str) # Convert here
-                if unit_count <= 0: return jsonify({'error': 'Unit count must be positive.'}), 400
-            except (ValueError, TypeError):
-                return jsonify({'error': 'Invalid unit_count format. Must be a positive integer string.'}), 400 # Corrected error message
-            
-            validated_player_r1_deployments.append({'owner': 'P1', 'unit_type': unit_type, 'count': unit_count, 'x': x, 'y': y})
-            player_r1_total_deployed_count += unit_count
-            player_occupied_cells_r1.add((x,y))
-
-        # R1 Budget for player is 10 (example)
-        R1_PLAYER_BUDGET = 10 
-        if player_r1_total_deployed_count != R1_PLAYER_BUDGET: 
-             return jsonify({'error': f'Total deployed unit count for Round 1 must be exactly {R1_PLAYER_BUDGET}.'}), 400
-
-
-        ai_r1_total_budget = 10
-        ai_r1_chosen_unit_type = random.choice(VALID_UNIT_TYPES)
+        # --- Fixed AI R1 Deployment ---
+        ai_r1_total_budget = 10 
+        ai_r1_chosen_unit_type = random.choice(VALID_UNIT_TYPES) 
+        ai_r1_deployments = [
+            {'owner': 'AI', 'unit_type': ai_r1_chosen_unit_type, 'count': ai_r1_total_budget, 'x': 4, 'y': 4}
+        ]
+        ai_r1_actual_deployed_count = ai_r1_total_budget
         
-        ai_r1_deployments, _ = deploy_ai_units(
-            ai_r1_total_budget, 
-            ai_r1_chosen_unit_type, 
-            list(player_occupied_cells_r1),
-            "AI"
-        )
-        ai_r1_actual_deployed_count = sum(d['count'] for d in ai_r1_deployments)
-
+        # --- Combine Deployments for Map State ---
         all_r1_deployments = validated_player_r1_deployments + ai_r1_deployments
         current_map_state = populate_map_from_deployments(all_r1_deployments)
         
-        player_r1_combat_unit_type = validated_player_r1_deployments[0]['unit_type'] if validated_player_r1_deployments else VALID_UNIT_TYPES[0]
-        player_r1_combat_total_count = player_r1_total_deployed_count
+        # Player R1 army summary (already defined variables are used)
+        # player_r1_combat_unit_type is 'infantry'
+        # player_r1_combat_total_count is 10
 
-        ai_r1_combat_unit_type = ai_r1_chosen_unit_type # AI deploys one type in R1
-        ai_r1_combat_total_count = ai_r1_actual_deployed_count
+        # AI R1 army summary (already defined variables are used)
+        # ai_r1_chosen_unit_type is the random choice
+        ai_r1_combat_unit_type = ai_r1_chosen_unit_type # Ensure this is assigned for clarity if not already
+        ai_r1_combat_total_count = ai_r1_actual_deployed_count # This is 10
 
+        # --- Combat Logic (remains the same) ---
         player_modifier = 1.0
         ai_modifier = 1.0
         if (player_r1_combat_unit_type == 'infantry' and ai_r1_combat_unit_type == 'archers') or \
@@ -190,32 +163,32 @@ def submit_round_1():
         if player_r1_eff_strength > ai_r1_eff_strength: r1_winner = "Player"
         elif ai_r1_eff_strength > player_r1_eff_strength: r1_winner = "AI"
 
-        player_r2_base_recruits = 10 + (10 - player_r1_combat_total_count)
-        ai_r2_base_recruits = 10 + (10 - ai_r1_combat_total_count)
+        player_r2_base_recruits = 10 + (10 - player_r1_combat_total_count) # player_r1_combat_total_count is 10, so base is 10
+        ai_r2_base_recruits = 10 + (10 - ai_r1_combat_total_count) # ai_r1_combat_total_count is 10, so base is 10
 
         strength_diff = abs(player_r1_eff_strength - ai_r1_eff_strength)
-        bonus_troops = int(strength_diff)
+        bonus_troops = int(strength_diff) # Bonus is based on effective strength difference
         player_r2_bonus, ai_r2_bonus = (bonus_troops, 0) if r1_winner == "Player" else (0, bonus_troops) if r1_winner == "AI" else (0,0)
         
         player_total_r2_pool = max(0, player_r2_base_recruits + player_r2_bonus)
         ai_total_r2_pool = max(0, ai_r2_base_recruits + ai_r2_bonus)
 
         return jsonify({
-            'round_1_results': {  # Ensure this is the top-level key
-                'player_army': {  # Corrected key
+            'round_1_results': {
+                'player_army': { 
                     'type': player_r1_combat_unit_type,
                     'count': player_r1_combat_total_count,
                     'strength': player_r1_eff_strength
                 },
-                'ai_army': {      # Corrected key
+                'ai_army': {
                     'type': ai_r1_combat_unit_type,
                     'count': ai_r1_combat_total_count,
                     'strength': ai_r1_eff_strength
                 },
                 'round_winner': r1_winner
             },
-            'player_r1_deployments': validated_player_r1_deployments,
-            'ai_r1_deployments': ai_r1_deployments,
+            'player_r1_deployments': validated_player_r1_deployments, # P1 fixed deployment
+            'ai_r1_deployments': ai_r1_deployments,                   # AI fixed deployment
             'current_map_state': current_map_state,
             'player_r2_data': {'base_recruits': player_r2_base_recruits, 'bonus': player_r2_bonus, 'total_r2_pool': player_total_r2_pool},
             'ai_r1_army_details_for_r2': {'type': ai_r1_combat_unit_type, 'count': ai_r1_combat_total_count}, 

@@ -1,17 +1,32 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const UNIT_STATS = {
+        'infantry': {
+            move_range: 2,
+            attack_range: 1,
+            attack_type: 'straight', // Can only attack in straight lines (horizontal/vertical)
+            hp: 10
+        },
+        'archers': {
+            move_range: 1,
+            attack_range: 3,
+            attack_type: 'diagonal_or_straight', // Can attack in straight lines and diagonals
+            hp: 8
+        },
+        'cavalry': {
+            move_range: 4,
+            attack_range: 1,
+            attack_type: 'straight',
+            hp: 12
+        }
+    };
+
     // --- Map Grid Elements ---
     const mapGridTable = document.getElementById('map-grid');
 
     // --- Round 1 UI Elements ---
     const r1Section = document.getElementById('round-1-section'); // Main section
-    const r1BatchUnitTypeSelect = document.getElementById('r1-batch-unit-type');
-    const r1BatchUnitCountInput = document.getElementById('r1-batch-unit-count');
-    const r1BatchXInput = document.getElementById('r1-batch-x');
-    const r1BatchYInput = document.getElementById('r1-batch-y');
-    const r1AddBatchButton = document.getElementById('r1-add-batch-button');
-    const r1TotalDeployedCountSpan = document.getElementById('r1-total-deployed-count');
-    const r1DeploymentListUl = document.getElementById('r1-deployment-list');
-    const r1FinalizeButton = document.getElementById('r1-finalize-deployments-button');
+    // R1 Batch Deployment UI elements are removed as R1 deployment is now fixed.
+    const startGameButton = document.getElementById('r1-finalize-deployments-button'); // ID will be updated in HTML later
 
     // --- Round 1 Results UI Elements ---
     const r1ResultsSection = document.getElementById('round-1-results-section');
@@ -48,9 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Game State Variables ---
     let currentRound = 1;
-    let r1Deployments = [];
-    let r1CurrentTotalUnits = 0;
-    const R1_MAX_UNITS = 10;
+    // r1Deployments and r1CurrentTotalUnits removed as R1 deployment is fixed.
+    const R1_MAX_UNITS = 10; // This might still be used by backend or for reference, keep for now.
 
     let r2Deployments = [];
     let r2CurrentTotalUnits = 0;
@@ -137,15 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
         listItem.textContent = `${count}x ${type} at (${x},${y})`;
         listElement.appendChild(listItem);
         
-        if (round === 1) {
-            r1Deployments.push({ unit_type: type, unit_count: count, x: parseInt(x), y: parseInt(y) });
-            r1CurrentTotalUnits += count;
-            totalCountSpan.textContent = r1CurrentTotalUnits;
-        } else {
-            r2Deployments.push({ unit_type: type, unit_count: count, x: parseInt(x), y: parseInt(y) });
-            r2CurrentTotalUnits += count;
-            totalCountSpan.textContent = r2CurrentTotalUnits;
-        }
+        // R1 specific logic removed from addDeploymentToList
+        // This function is now only for Round 2.
+        r2Deployments.push({ unit_type: type, unit_count: count, x: parseInt(x), y: parseInt(y) });
+        r2CurrentTotalUnits += count;
+        totalCountSpan.textContent = r2CurrentTotalUnits;
         return true;
     }
     
@@ -157,50 +167,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event Listeners ---
-    r1AddBatchButton.addEventListener('click', () => {
-        const type = r1BatchUnitTypeSelect.value;
-        const count = parseInt(r1BatchUnitCountInput.value);
-        const x = r1BatchXInput.value;
-        const y = r1BatchYInput.value;
+    // r1AddBatchButton listener removed as R1 deployment is fixed.
 
-        if (isNaN(count) || count <= 0) { showMessage("R1 Batch: Count must be positive.", true); return; }
-        if (x === "" || y === "") { showMessage("R1 Batch: X and Y coordinates are required.", true); return; }
-        if (parseInt(x) < 0 || parseInt(x) > 4 || parseInt(y) < 0 || parseInt(y) > 4) { showMessage("R1 Batch: Coordinates must be 0-4.", true); return; }
+    startGameButton.addEventListener('click', async () => {
+        // R1 deployment checks removed as it's now fixed by the server.
 
-        if (addDeploymentToList(1, type, count, x, y, r1DeploymentListUl, r1TotalDeployedCountSpan, r1CurrentTotalUnits, R1_MAX_UNITS)) {
-            resetDeploymentInputs(r1BatchUnitTypeSelect, r1BatchUnitCountInput, r1BatchXInput, r1BatchYInput);
-            showMessage("R1 Batch added. Add more or finalize.", false);
-        }
-    });
-
-    r1FinalizeButton.addEventListener('click', async () => {
-        if (r1Deployments.length === 0) {
-            showMessage("R1: No units deployed. Please add at least one batch.", true);
-            return;
-        }
-        if (r1CurrentTotalUnits !== R1_MAX_UNITS) {
-            showMessage(`R1: Must deploy exactly ${R1_MAX_UNITS} units. Currently ${r1CurrentTotalUnits}.`, true);
-            return;
-        }
-
-        showMessage('R1: Finalizing deployments...');
-        r1FinalizeButton.disabled = true;
-        r1AddBatchButton.disabled = true;
+        showMessage('Starting Game...'); // Updated message
+        startGameButton.disabled = true;
+        // r1AddBatchButton.disabled = true; // This button is removed
 
         try {
             const response = await fetch('/submit_round_1', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ player_deployments: r1Deployments }), // Sending the list of deployments
+                body: JSON.stringify({}), // Send empty body for R1 fixed deployment
             });
             const data = await response.json();
 
             // --- Start of new defensive checks ---
             if (!data) {
-                console.error("R1 Finalize Error: Received no data from server.", response);
-                showMessage("R1 Error: No data received from server.", true);
-                r1FinalizeButton.disabled = false;
-                r1AddBatchButton.disabled = false;
+                console.error("Start Game Error: Received no data from server.", response); // Renamed for clarity
+                showMessage("Start Game Error: No data received from server.", true);
+                startGameButton.disabled = false;
+                // r1AddBatchButton.disabled = false; // This button is removed
                 return;
             }
 
@@ -238,8 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!data.player_r1_deployments) console.error("Missing: data.player_r1_deployments");
                 if (!data.ai_r1_deployments) console.error("Missing: data.ai_r1_deployments");
 
-                r1FinalizeButton.disabled = false;
-                r1AddBatchButton.disabled = false;
+                startGameButton.disabled = false;
+                // r1AddBatchButton.disabled = false; // This button is removed
                 return;
             }
             // --- End of new defensive checks ---
@@ -288,10 +277,10 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage('R1 complete. Proceed to Round 2 deployment.');
 
         } catch (error) {
-            console.error('Error in Round 1 Finalize:', error);
-            showMessage(`R1 Finalize Error: ${error.message}`, true);
-            r1FinalizeButton.disabled = false;
-            r1AddBatchButton.disabled = false;
+            console.error('Error Starting Game:', error); // Renamed for clarity
+            showMessage(`Start Game Error: ${error.message}`, true);
+            startGameButton.disabled = false;
+            // r1AddBatchButton.disabled = false; // This button is removed
         }
     });
     
@@ -383,10 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function initializeGame() {
         createMapGrid();
         currentRound = 1;
-        r1Deployments = [];
-        r1CurrentTotalUnits = 0;
-        r1TotalDeployedCountSpan.textContent = "0";
-        r1DeploymentListUl.innerHTML = '';
+        // R1 deployment related resets removed
         
         r2Deployments = [];
         r2CurrentTotalUnits = 0;
@@ -400,14 +386,14 @@ document.addEventListener('DOMContentLoaded', () => {
         r2Section.style.display = 'none';
         r2ResultsSection.style.display = 'none';
         
-        r1AddBatchButton.disabled = false;
-        r1FinalizeButton.disabled = false;
+        // r1AddBatchButton.disabled = false; // Removed
+        startGameButton.disabled = false;
         // Ensure R2 buttons are initially disabled
         r2AddBatchButton.disabled = true;
         r2FinalizeButton.disabled = true;
 
-        showMessage("Round 1: Deploy your units.");
-        resetDeploymentInputs(r1BatchUnitTypeSelect, r1BatchUnitCountInput, r1BatchXInput, r1BatchYInput);
+        showMessage("Click 'Start Game' to begin Round 1."); // Updated message
+        // resetDeploymentInputs for R1 removed.
         if (r2BatchUnitTypeSelect && r2BatchUnitCountInput && r2BatchXInput && r2BatchYInput) {
              resetDeploymentInputs(r2BatchUnitTypeSelect, r2BatchUnitCountInput, r2BatchXInput, r2BatchYInput);
         }
